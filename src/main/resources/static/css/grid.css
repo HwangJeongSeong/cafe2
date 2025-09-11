@@ -1,0 +1,83 @@
+/* ===============================
+   Bootstrap-visual Shim for Custom Grid
+   - Keep your API: .g-container, .grid, .col-*, .md-col-*, .lg-col-*, .xl-col-*
+   - Visual parity with Bootstrap 5 (gutters, breakpoints, container widths)
+   =============================== */
+
+/* Reset (box-sizing) */
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+/* Bootstrap-equivalent variables */
+:root{
+  --bs-gutter-x: 1.5rem; /* 24px */
+  --bs-gutter-y: 0;
+}
+
+/* --------------------------------
+   Containers (Bootstrap .container)
+-----------------------------------*/
+.g-container{
+  width: 100%;
+  padding-right: 0 !important;
+  padding-left: 0 !important;
+  margin-right: auto;
+  margin-left:  auto;
+}
+
+/* Max widths by breakpoint */
+@media (min-width: 576px){  .g-container { max-width: 540px; } }   /* sm */
+@media (min-width: 768px){  .g-container { max-width: 720px; } }   /* md */
+@media (min-width: 992px){  .g-container { max-width: 960px; } }   /* lg */
+@media (min-width: 1200px){ .g-container { max-width: 1140px; } }  /* xl */
+@media (min-width: 1400px){ .g-container { max-width: 1320px; } }  /* xxl */
+
+/* Fluid container (like .container-fluid) */
+.g-container-fluid{
+  width: 100%;
+  padding-right: calc(var(--bs-gutter-x) * 0.5);
+  padding-left:  calc(var(--bs-gutter-x) * 0.5);
+  margin-right: auto;
+  margin-left:  auto;
+  max-width: 100%;
+}
+
+/* --------------------------------
+   Rows / Gutters (Bootstrap .row)
+-----------------------------------*/
+.grid{
+  display: flex;
+  flex-wrap: wrap;
+  margin-right: calc(var(--bs-gutter-x) * -0.5);
+  margin-left:  calc(var(--bs-gutter-x) * -0.5);
+  /* vertical gutter behavior: opt-in via .g-gy-* utilities below */
+}
+
+.grid > *{
+  box-sizing: border-box;
+  padding-right: calc(var(--bs-gutter-x) * 0.5);
+  padding-left:  calc(var(--bs-gutter-x) * 0.5);
+  margin-top: var(--bs-gutter-y);
+}
+
+/* Remove top margin on first "row" line to mimic Bootstrap */
+.grid > *:first-child{ margin-top: 0; }
+
+/* --------------------------------
+   Columns (Bootstrap .col, .col-*)
+-----------------------------------*/
+.col{ /* auto growing column */
+  flex: 1 0 0%;
+  max-width: 100%;
+}
+
+/* Fixed fraction columns (12-grid) */
+.col-1  { flex: 0 0 auto; width: 8.333333%; }
+.col-2  { flex: 0 0 auto; width: 16.666667%; }
+.col-3  { flex: 0 0 auto; width: 25%; }
+.col-4  { flex: 0 0 auto; width: 33.333333%; }
+.col-5  { flex: 0 0 auto; width: 41.666667%; }
+.col-6  { flex: 0 0 auto; width: 50%; }
+.col-7  { flex: 0 0 auto; width: 58.333333%; }
+.col-8  { flex: 0 0 auto; width: 66.666667%;

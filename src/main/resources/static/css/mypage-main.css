@@ -1,0 +1,22 @@
+
+
+
+
+.wrapper{
+  display: flex;
+  min-height: 80dvh;
+  align-items: stretch;
+  border: 1px solid red;
+}
+
+
+.wrapper > .card {
+    width: 35%;
+    min-height: auto;
+}
+
+.right-console {
+    width: 65%;
+    border: 1px solid black;
+    min-height: auto;
+}

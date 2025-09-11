@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+
+<th:block layout:fragment="headExtra">
+  <meta charset="UTF-8"/>
+  <title th:text="|리뷰 목록 - ${cafe.name}|">리뷰 목록</title>
+  <link rel="stylesheet" th:href="@{/css/review-list.css}"/>
+</th:block>
+
+<div layout:fragment="content" class="container mt-4">
+
+  <!-- 상단 요약 -->
+  <section class="card shadow-sm mb-3">
+    <div class="card-body d-flex justify-content-between">
+      <div>
+        <h2 class="h4 mb-1" th:text="${cafe.name}">카페명</h2>
+        <div class="text-muted small">
+          평균
+          <span class="rate read-only" th:with="ar=${avgRating != null ? T(java.lang.Math).round(avgRating * 2) / 2.0 : 0}">
+            <input type="radio" id="avg-rating10" value="5.0" th:checked="${ar == 5.0}"><label for="avg-rating10" title="5점"></label>
+            <input type="radio" id="avg-rating9" value="4.5" th:checked="${ar == 4.5}"><label class="half" for="avg-rating9" title="4.5점"></label>
+            <input type="radio" id="avg-rating8" value="4.0" th:checked="${ar == 4.0}"><label for="avg-rating8" title="4점"></label>
+            <input type="radio" id="avg-rating7" value="3.5" th:checked="${ar == 3.5}"><label class="half" for="avg-rating7" title="3.5점"></label>
+            <input type="radio" id="avg-rating6" value="3.0" th:checked="${ar == 3.0}"><label for="avg-rating6" title="3점"></label>
+            <input type="radio" id="avg-rating5" value="2.5" th:checked="${ar == 2.5}"><label class="half" for="avg-rating5" title="2.5점"></label>
+            <input type="radio" id="avg-rating4" value="2.0" th:checked="${ar == 2.0}"><label for="avg-rating4" title="2점"></label>
+            <input type="radio" id="avg-rating3" value="1.5" th:checked="${ar == 1.5}"><label class="half" for="avg-rating3" title="1.5점"></label>
+            <input type="radio" id="avg-rating2" value="1.0" th:checked="${ar == 1.0}"><label for="avg-rating2" title="1점"></label>
+            <input type="radio" id="avg-rating1" value="0.5" th:checked="${ar == 0.5}"><label class="half" for="avg-rating1" title="0.5점"></label>
+          </span>
+          <span class="ms-1" th:text="${avgRating != null ? #numbers.formatDecimal(avgRating,1,1) : '0.0'}">0.0</span> / 5.0
+          <span class="ms-2">리뷰 <b th:text="${reviewCount}">0</b>개</span>
+        </div>
+      </div>
+      <div class="text-end">
+        <a th:href="@{|/cafe/detail/${cafe.id}|}" class="btn btn-outline-secondary btn-sm">카페 상세</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 작성 폼 -->
+  <section class="card shadow-sm mb-3" sec:authorize="isAuthenticated()">
+    <div class="card-body">
+      <h3 class="h6 mb-3">리뷰 작성</h3>
+      <form id="reviewCreateForm"
+            th:action="@{/cafes/{id}/reviews(id=${cafe.id})}"
+            method="post"
+            enctype="multipart/form-data"
+            class="needs-validation" novalidate>
+        <input th:if="${_csrf}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+        <div class="row g-2">
+          <div class="col-12 col-md-2">
+            <div class="rate">
+              <input type="radio" id="create-rating10" name="rating" value="5.0"><label for="create-rating10" title="5점"></label>
+              <input type="radio" id="create-rating9" name="rating" value="4.5"><label class="half" for="create-rating9" title="4.5점"></label>
+              <input type="radio" id="create-rating8" name="rating" value="4.0" checked><label for="create-rating8" title="4점"></label>
+              <input type="radio" id="create-rating7" name="rating" value="3.5"><label class="half" for="create-rating7" title="3.5점"></label>
+              <input type="radio" id="create-rating6" name="rating" value="3.0"><label for="create-rating6" title="3점"></label>
+              <input type="radio" id="create-rating5" name="rating" value="2.5"><label class="half" for="create-rating5" title="2.5점"></label>
+              <input type="radio" id="create-rating4" name="rating" value="2.0"><label for="create-rating4" title="2점"></label>
+              <input type="radio" id="create-rating3" name="rating" value="1.5"><label class="half" for="create-rating3" title="1.5점"></label>
+              <input type="radio" id="create-rating2" name="rating" value="1.0"><label for="create-rating2" title="1점"></label>
+              <input type="radio" id="create-rating1" name="rating" value="0.5"><label class="half" for="create-rating1" title="0.5점"></label>
+            </div>
+          </div>
+          <div class="col-12 col-md-7">
+            <textarea id="content" name="content" class="form-control" minlength="5" maxlength="4000"
+                      placeholder="후기를 입력하세요(최소 5자)" required></textarea>
+          </div>
+          <div class="col-12 col-md-3">
+            <input type="file" name="images" class="form-control" accept="image/*" multiple>
+          </div>
+        </div>
+
+        <div class="mt-2">
+          <button class="btn btn-primary btn-sm" type="submit">등록</button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- 리뷰 리스트 섹션 (프래그먼트) -->
+  <section id="reviewsSection"
+           th:fragment="section"
+           class="card shadow-sm"
+           th:attr="data-review-section-url=@{|/cafes/${cafe.id}/reviews/section?rpage=${page.number}&rsize=${page.size}|}">
+    <div class="card-body">
+
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h3 class="h6 mb-0">리뷰</h3>
+        <div class="text-muted small">
+          페이지 <span th:text="${page.number + 1}">1</span> / <span th:text="${page.totalPages}">1</span>
+        </div>
+      </div>
+
+      <div class="row g-3" th:if="${page != null and page.totalElements > 0}">
+        <article th:each="rv : ${page.content}" class="col-12">
+          <div class="border rounded p-3 h-100">
+            <div class="d-flex justify-content-between">
+              <h4 class="h6 mb-0">
+                <span class="badge bg-info text-dark"
+                      th:text="${rv.user != null ? rv.user.nickname : '알 수 없음'}">작성자</span>
+                <span class="rate read-only ms-2" th:with="r=${rv.rating}">
+                  <input type="radio" th:id="'rv' + ${rv.id} + '-rating10'" value="5.0" th:checked="${r == 5.0}"><label th:for="'rv' + ${rv.id} + '-rating10'" title="5점"></label>
+                  <input type="radio" th:id="'rv' + ${rv.id} + '-rating9'" value="4.5" th:checked="${r == 4.5}"><label class="half" th:for="'rv' + ${rv.id} + '-rating9'" title="4.5점"></label>
+                  <input type="radio" th:id="'rv' + ${rv.id} + '-rating8'" value="4.0" th:checked="${r == 4.0}"><label th:for="'rv' + ${rv.id} + '-rating8'" title="4점"></label>
+                  <input type="radio" th:id="'rv' + ${rv.id} + '-rating7'" value="3.5" th:checked="${r == 3.5}"><label class="half" th:for="'rv' + ${rv.id} + '-rating7'" title="3.5점"></label>
+                  <input type="radio" th:id="'rv' + ${rv.id} + '-rating6'" value="3.0" th:checked="${r == 3.0}"><label th:for="'rv' + ${rv.id} + '-rating6'" title="3점"></label>
+                  <input type="radio" th:id="'rv' + ${rv.id} + '-rating5'" value="2.5" th:checked="${r == 2.5}"><label class="half" th:for="'rv' + ${rv.id} + '-rating5'" title="2.5점"></label>
+                  <input type="radio" th:id="'rv' + ${rv.id} + '-rating4'" value="2.0" th:checked="${r == 2.0}"><label th:for="'rv' + ${rv.id} + '-rating4'" title="2점"></label>
+                  <input type="radio" th:id="'rv' + ${rv.id} + '-rating3'" value="1.5" th:checked="${r == 1.5}"><label class="half" th:for="'rv' + ${rv.id} + '-rating3'" title="1.5점"></label>
+                  <input type="radio" th:id="'rv' + ${rv.id} + '-rating2'" value="1.0" th:checked="${r == 1.0}"><label th:for="'rv' + ${rv.id} + '-rating2'" title="1점"></label>
+                  <input type="radio" th:id="'rv' + ${rv.id} + '-rating1'" value="0.5" th:checked="${r == 0.5}"><label class="half" th:for="'rv' + ${rv.id} + '-rating1'" title="0.5점"></label>
+                </span>
+              </h4>
+              <time class="text-muted small"
+                    th:text="${#temporals.format(rv.createdAt,'yyyy-MM-dd HH:mm')}">2025-09-01</time>
+            </div>
+            <!-- 리뷰 내용이 너무 많이 표시 돼서 타임리프 문법으로 리스트에서만 줄여버림 -->
+            <p class="mt-2 mb-2" th:text="${#strings.abbreviate(rv.content, 300)}">리뷰 내용</p>
+
+            <div class="row g-2 mt-1" th:if="${rv.images != null and !rv.images.isEmpty()}">
+              <div class="col-4" th:each="img : ${rv.images}">
+                <img th:src="${img.imageUrl}" alt="review image" class="img-fluid rounded">
+              </div>
+            </div>
+
+            <div class="d-flex align-items-center mt-3">
+              <div class="review-like-box" th:data-review-id="${rv.id}"
+                   th:data-liked="${likedMap[rv.id] != null ? likedMap[rv.id] : false}">
+                <button type="button" class="btn btn-sm btn-outline-danger review-like-btn">
+                  <span class="label-liked" th:if="${likedMap[rv.id]}">♥ 좋아요 취소</span>
+                  <span class="label-unliked" th:if="${likedMap[rv.id] == null || !likedMap[rv.id]}">♡ 좋아요</span>
+                </button>
+                <span class="review-like-count ms-1" th:text="${likeCountMap[rv.id]}">0</span>
+              </div>
+              <div class="ms-auto text-end">
+                <a class="btn btn-sm btn-outline-primary" th:href="@{|/reviews/${rv.id}|}">상세보기</a>
+                <a th:if="${me != null && (me.id == rv.user?.id or me.role == 'ADMIN' or me.role == 'ROLE_ADMIN')}" class="btn btn-sm btn-secondary ms-1" th:href="@{|/reviews/${rv.id}/edit|}">수정</a>
+                <form th:if="${me != null && (me.id == rv.user?.id or me.role == 'ADMIN' or me.role == 'ROLE_ADMIN')}" th:action="@{|/reviews/${rv.id}/delete|}" method="post" class="d-inline ms-1" onsubmit="return confirm('정말 삭제하시겠습니까?');">
+                  <input type="hidden" th:if="${_csrf}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                  <button type="submit" class="btn btn-sm btn-danger">삭제</button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <nav class="mt-3 review-pagination" th:if="${page != null and page.totalPages > 1}">
+        <ul class="pagination pagination-sm mb-0">
+          <li class="page-item" th:classappend="${!page.hasPrevious()}? 'disabled'">
+            <a class="page-link"
+               th:href="@{/cafes/{id}/reviews/section(id=${cafe.id}, rpage=${page.number - 1}, rsize=${page.size})}">&laquo; 이전</a>
+          </li>
+
+          <li class="page-item"
+              th:each="p : ${#numbers.sequence(0, page.totalPages - 1)}"
+              th:classappend="${p} == ${page.number} ? 'active'">
+            <a class="page-link"
+               th:if="${p} != ${page.number}"
+               th:href="@{/cafes/{id}/reviews/section(id=${cafe.id}, rpage=${p}, rsize=${page.size})}"
+               th:text="${p+1}">1</a>
+            <span class="page-link" th:if="${p} == ${page.number}" th:text="${p+1}">1</span>
+          </li>
+
+          <li class="page-item" th:classappend="${!page.hasNext()}? 'disabled'">
+            <a class="page-link"
+               th:href="@{/cafes/{id}/reviews/section(id=${cafe.id}, rpage=${page.number + 1}, rsize=${page.size})}">다음 &raquo;</a>
+          </li>
+        </ul>
+      </nav>
+
+      <div th:if="${page == null || page.totalElements == 0}" class="text-muted">
+        아직 작성된 리뷰가 없어요.
+      </div>
+    </div>
+  </section>
+
+  <!-- ✅ 레이아웃 삽입 슬롯을 못 쓰더라도 여기서 직접 로드 -->
+  <script th:src="@{/js/review-like.js}" defer></script>
+  <script th:src="@{/js/review-list.js}" defer></script>
+  <script th:src="@{/js/reviews-section.js}" defer></script>
+</div>
+
+</html>
