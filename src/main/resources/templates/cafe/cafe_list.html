@@ -117,6 +117,7 @@
             <th>날짜</th>
             <th>조회수</th>
             <th>이미지</th>
+            <th>위치 인증</th>
         </tr>
         </thead>
         <tbody>
@@ -169,9 +170,12 @@
             </td>
             <td class="thumb">
                 <a th:href="@{|/cafe/detail/${cafeList.id}|}">
-                    <img th:src="${imageMap[cafeList.id]} ?: '/images/DBimg.PNG'"
+                    <img th:src="${imageMap[cafeList.id]} ?: '/images/DBimg.PNG'" 
                          alt="noImg" loading="lazy" class="thumb-img">
                 </a>
+            </td>
+            <td>
+                <a th:href="@{|/cafes/${cafeList.id}/verify-location|}" class="btn">위치 인증</a>
             </td>
         </tr>
         </tbody>

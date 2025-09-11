@@ -1,0 +1,12 @@
+<div layout:fragment="content">
+  <h2 th:text="|${cafe.name} 위치 인증|">위치 인증</h2>
+  <div id="map" style="width:100%;height:300px;margin-bottom:10px"></div>
+  <button id="verifyBtn" type="button" class="btn" th:attr="data-cafe-id=${cafe.id}">현재 위치로 인증</button>
+
+  <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=8ed22f8047c9ec337686bbb083546da6&libraries=services"></script>
+  <script src="/js/cafe-map.js"></script>
+  <script th:inline="javascript">
+    initLocationVerify([[${cafeLat}]], [[${cafeLng}]], [[${cafe.id}]]);
+  </script>
+</div>
+</html>

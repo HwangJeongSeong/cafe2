@@ -12,6 +12,7 @@ import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -182,7 +183,11 @@ public class ReviewController {
        작성 폼
        ======================= */
     @GetMapping("/cafes/{cafeId}/reviews/new")
-    public String createForm(@PathVariable Long cafeId, Model model) {
+    public String createForm(@PathVariable Long cafeId, Model model, HttpSession session) {
+        Long verified = (Long) session.getAttribute("verifiedCafeId");
+        if (verified == null || !verified.equals(cafeId)) {
+            return "redirect:/cafes/" + cafeId + "/verify-location";
+        }
         SiteUser me = currentUserService.getCurrentUserOrThrow();
         var cafe = cafeService.getById(cafeId);
         model.addAttribute("cafe", cafe);
@@ -200,7 +205,12 @@ public class ReviewController {
                          BindingResult bindingResult,
                          RedirectAttributes ra,
                          Model model,
-                         @RequestParam(value = "images", required = false) List<MultipartFile> images) {
+                         @RequestParam(value = "images", required = false) List<MultipartFile> images,
+                         HttpSession session) {
+        Long verified = (Long) session.getAttribute("verifiedCafeId");
+        if (verified == null || !verified.equals(cafeId)) {
+            return "redirect:/cafes/" + cafeId + "/verify-location";
+        }
         SiteUser me = currentUserService.getCurrentUserOrThrow();
         var cafe = cafeService.getById(cafeId);
 
@@ -240,7 +250,7 @@ public class ReviewController {
         Review saved = reviewService.createReview(
                 cafeId, me, form.getRating(), form.getContent().trim(), urls
         );
-
+        session.removeAttribute("verifiedCafeId");
         ra.addFlashAttribute("message", "리뷰가 등록되었습니다.");
         return "redirect:/reviews/" + saved.getId();
     }
@@ -253,7 +263,12 @@ public class ReviewController {
     public ResponseEntity<?> createAjax(@PathVariable Long cafeId,
                                         @ModelAttribute("form") CreateReviewForm form,
                                         BindingResult bindingResult,
-                                        @RequestParam(value = "images", required = false) List<MultipartFile> images) {
+                                        @RequestParam(value = "images", required = false) List<MultipartFile> images,
+                                        HttpSession session) {
+        Long verified = (Long) session.getAttribute("verifiedCafeId");
+        if (verified == null || !verified.equals(cafeId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(java.util.Map.of("ok", false, "message", "위치 인증이 필요합니다."));
+        }
 
         if (form.getContent() == null || form.getContent().trim().length() < 5) {
             bindingResult.reject("content.tooShort", "리뷰 내용은 5자 이상이어야 합니다.");
@@ -290,7 +305,7 @@ public class ReviewController {
         Review saved = reviewService.createReview(
                 cafeId, me, form.getRating(), form.getContent().trim(), urls
         );
-
+        session.removeAttribute("verifiedCafeId");
         return ResponseEntity.ok(java.util.Map.of("ok", true, "id", saved.getId(), "message", "리뷰가 등록되었습니다."));
     }
 
