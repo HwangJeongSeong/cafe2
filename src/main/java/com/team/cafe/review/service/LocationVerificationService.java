@@ -6,14 +6,14 @@ import com.team.cafe.review.dto.CafeLocationDto;
 import com.team.cafe.review.external.kakao.KakaoLocalClient;
 import com.team.cafe.review.external.kakao.dto.KakaoAddressResponse;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 @RequiredArgsConstructor
@@ -29,11 +29,11 @@ public class LocationVerificationService {
     /**
      * 카페 주소로 좌표를 조회
      */
-    public CafeLocationDto getCafeLocation(Long cafeId) {
+    public Optional<CafeLocationDto> getCafeLocation(Long cafeId) {
         // 1) check cache first
         CafeLocationDto cached = locationCache.get(cafeId);
         if (cached != null) {
-            return cached;
+            return Optional.of(cached);
         }
 
         // 2) load cafe from DB
@@ -47,14 +47,15 @@ public class LocationVerificationService {
                     cafe.getLng().doubleValue()
             );
             locationCache.put(cafeId, dto);
-            return dto;
+            return Optional.of(dto);
         }
 
         // 4) otherwise call external API
         String address = cafe.getAddress1();
         KakaoAddressResponse resp = kakaoLocalClient.searchAddress(address).block();
         if (resp == null || resp.documents() == null || resp.documents().isEmpty()) {
-            throw new IllegalStateException("카페 주소 좌표를 찾을 수 없습니다.");
+            log.warn("카페 주소 좌표를 찾을 수 없습니다. cafeId={}", cafeId);
+            return Optional.empty();
         }
         var doc = resp.documents().get(0);
         double lat = Double.parseDouble(doc.y());
@@ -67,7 +68,7 @@ public class LocationVerificationService {
         cafe.setLng(BigDecimal.valueOf(lng));
         cafeListRepository.save(cafe);
 
-        return dto;
+        return Optional.of(dto);
     }
 
     /**

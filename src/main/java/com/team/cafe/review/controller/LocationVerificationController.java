@@ -13,7 +13,6 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
-import java.util.Optional;
 
 @Controller
 @RequiredArgsConstructor
@@ -27,22 +26,22 @@ public class LocationVerificationController {
     public String verifyForm(@PathVariable Long cafeId, Model model, HttpSession session) {
         var cafe = cafeListRepository.findById(cafeId)
                 .orElseThrow(() -> new IllegalArgumentException("카페를 찾을 수 없습니다. id=" + cafeId));
-        Optional<CafeLocationDto> locOpt = locationVerificationService.getCafeLocation(cafeId);
-        if (locOpt.isEmpty()) {
-            log.warn("카페 위치 조회 실패: cafeId={}", cafeId);
+        try {
+            CafeLocationDto loc = locationVerificationService.getCafeLocation(cafeId);
+            model.addAttribute("cafe", cafe);
+            model.addAttribute("cafeLat", loc.lat());
+            model.addAttribute("cafeLng", loc.lng());
+
+            // store coordinates in session for reuse in POST verification
+            session.setAttribute("cafeLat", loc.lat());
+            session.setAttribute("cafeLng", loc.lng());
+
+            return "review/verify_location";
+        } catch (RuntimeException e) {
+            log.warn("카페 위치 조회 실패: cafeId={}", cafeId, e);
             model.addAttribute("message", "카페 위치 정보를 가져오지 못했습니다.");
             return "redirect:/error";
         }
-        CafeLocationDto loc = locOpt.get();
-        model.addAttribute("cafe", cafe);
-        model.addAttribute("cafeLat", loc.lat());
-        model.addAttribute("cafeLng", loc.lng());
-
-        // store coordinates in session for reuse in POST verification
-        session.setAttribute("cafeLat", loc.lat());
-        session.setAttribute("cafeLng", loc.lng());
-
-        return "review/verify_location";
     }
 
     @PostMapping("/cafes/{cafeId}/verify-location")
@@ -56,7 +55,12 @@ public class LocationVerificationController {
         Double cafeLat = (Double) session.getAttribute("cafeLat");
         Double cafeLng = (Double) session.getAttribute("cafeLng");
         if (cafeLat == null || cafeLng == null) {
-            CafeLocationDto loc = locationVerificationService.getCafeLocation(cafeId);
+            Optional<CafeLocationDto> locOpt = locationVerificationService.getCafeLocation(cafeId);
+            if (locOpt.isEmpty()) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("success", false, "message", "카페 위치 정보를 가져오지 못했습니다."));
+            }
+            CafeLocationDto loc = locOpt.get();
             cafeLat = loc.lat();
             cafeLng = loc.lng();
         }
