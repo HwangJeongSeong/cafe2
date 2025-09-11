@@ -175,7 +175,7 @@
                 </a>
             </td>
             <td>
-                <a th:href="@{|/cafes/${cafeList.id}/verify-location|}" class="btn">위치 인증</a>
+                <a th:href="@{/cafes/{id}/verify-location(id=${cafeList.id})}" class="btn">위치 인증</a>
             </td>
         </tr>
         </tbody>

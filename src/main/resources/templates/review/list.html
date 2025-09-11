@@ -48,7 +48,7 @@
       <div class="d-flex justify-content-between align-items-center mb-3">
         <h3 class="h6 mb-0">리뷰 작성</h3>
         <a th:if="${session.verifiedCafeId != cafe.id}"
-           th:href="@{|/cafes/${cafe.id}/verify-location|}"
+           th:href="@{/cafes/{id}/verify-location(id=${cafe.id})}"
            class="btn btn-outline-primary btn-sm">위치 인증</a>
       </div>
       <form id="reviewCreateForm"
