@@ -1,3 +1,13 @@
+<!DOCTYPE html>
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+
+<th:block layout:fragment="headExtra">
+  <title th:text="|${cafe.name} 위치 인증|">위치 인증</title>
+</th:block>
+
 <div layout:fragment="content">
   <h2 th:text="|${cafe.name} 위치 인증|">위치 인증</h2>
   <div id="map" style="width:100%;height:300px;margin-bottom:10px"></div>
@@ -9,4 +19,5 @@
     initLocationVerify([[${cafeLat}]], [[${cafeLng}]], [[${cafe.id}]]);
   </script>
 </div>
+
 </html>
